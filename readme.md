@@ -5,6 +5,12 @@
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 ![Style](https://img.shields.io/badge/Style-Cyber%20%2F%20CLI-00ff00?style=for-the-badge)
 
+<p align="center">
+  <a href="https://github.com/Yous2ef/YMATools-FolderIconChanger/releases/download/v1.0.0/YMAIconChanger.ps1">
+    <img src="https://img.shields.io/badge/DOWNLOAD_TOOL_NOW-v1.0.0-00ff00?style=for-the-badge&logo=windows&logoColor=black&labelColor=101010" alt="Download YMA Tool" height="50">
+  </a>
+</p>
+
 > **"Customizing Windows folders shouldn't be boring."**  
 > An open-source, cyber-themed automation tool that integrates into your Context Menu. It handles the downloading, converting, and applying of high-quality icons to any folder on your system.
 
