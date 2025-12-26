@@ -1,6 +1,6 @@
 <#
     .TITLE
-        YMA Tools: Folder Icon Changer - Setup Manager v1.0.0 (Cyber Edition)
+        YMA Tools: Folder Icon Changer - Setup Manager v1.0.1 (Cyber Edition)
     .AUTHOR
         Youssef Mahmoud Abdelqeader (Akhdar/Mr. Green)
     .DESCRIPTION
@@ -12,7 +12,7 @@
 # 1. INITIALIZATION & ADMIN CHECK
 # ═══════════════════════════════════════════════════════════════════════════
 
-$Version         = "1.0.0"
+$Version         = "1.0.1"
 $ProgramName     = "YMA TOOLS: FOLDER ICON CHANGER"
 $SystemName      = "YMAIconChanger"
 $InstallBase     = "C:\YMATools"
@@ -582,33 +582,59 @@ function Set-FolderIcon {
         Write-Host "`n[>] Applying icon..." -ForegroundColor Cyan
         $desktopIniPath = Join-Path $FolderPath "desktop.ini"
         
-        if (Test-Path $desktopIniPath) {
+        # 1. Clean up existing desktop.ini
+        if (Test-Path $desktopIniPath -ErrorAction SilentlyContinue) {
             attrib -h -s -r "$desktopIniPath" 2>$null
             Remove-Item -Path $desktopIniPath -Force -ErrorAction SilentlyContinue
         }
 
+        # 2. Create the new ini content
         $iniContent = "[.ShellClassInfo]`r`nIconResource=$IconPath,0`r`n[ViewState]`r`nMode=`r`nVid=`r`nFolderType=Generic"
-        [System.IO.File]::WriteAllText($desktopIniPath, $iniContent, [System.Text.Encoding]::Unicode)
         
+        # Use a small retry loop for writing the file in case of locks
+        $written = $false
+        for ($i = 1; $i -le 3; $i++) {
+            try {
+                [System.IO.File]::WriteAllText($desktopIniPath, $iniContent, [System.Text.Encoding]::Unicode)
+                $written = $true
+                break
+            } catch {
+                Start-Sleep -Milliseconds 500
+            }
+        }
+
+        if (-not $written) { throw "Could not write desktop.ini (file locked by another process)" }
+
+        # 3. Set required attributes
         attrib +h +s "$desktopIniPath"
-        attrib +r "$FolderPath"
+        attrib +r "$FolderPath" # The 'Read-only' flag on a FOLDER tells Windows to process desktop.ini
 
-        (Get-Item -Path $FolderPath -Force).LastWriteTime = Get-Date
+        # 4. "Nudge" the folder - wrapped in try/catch so it doesn't crash the script if locked
+        try {
+            (Get-Item -Path $FolderPath -Force).LastWriteTime = Get-Date
+        } catch {
+            # If this fails, it's okay. The icon will still apply after the shell refresh.
+            Write-Host " [i] Note: Could not update folder timestamp (minor), continuing..." -ForegroundColor Gray
+        }
 
-        Start-Process -FilePath "ie4uinit.exe" -ArgumentList "-show" -WindowStyle Hidden -Wait -ErrorAction SilentlyContinue
-        
-        $code = "[DllImport(`"Shell32.dll`")] private static extern int SHChangeNotify(int eventId, int flags, IntPtr item1, IntPtr item2); public static void Refresh() { SHChangeNotify(0x8000000, 0x1000, IntPtr.Zero, IntPtr.Zero); }"
+        # 5. Notify the System of the change (Shell Refresh)
+        $code = @"
+            [DllImport("Shell32.dll")] 
+            private static extern int SHChangeNotify(int eventId, int flags, IntPtr item1, IntPtr item2);
+            public static void Refresh() { 
+                SHChangeNotify(0x08000000, 0x1000, IntPtr.Zero, IntPtr.Zero); 
+            }
+"@
         if (-not ([System.Management.Automation.PSTypeName]'Win32.Win32Refresh').Type) {
-            Add-Type -MemberDefinition $code -Name Win32Refresh -Namespace Win32 -ErrorAction Stop | Out-Null
+            Add-Type -MemberDefinition $code -Name Win32Refresh -Namespace Win32 -ErrorAction SilentlyContinue
         }
         [Win32.Win32Refresh]::Refresh()
-        
+
         Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
         Start-Sleep -Milliseconds 500
         Start-Process explorer.exe
 
         Write-Host "[✓] Icon applied successfully" -ForegroundColor Green
-        Write-Host "[i] Press F5 to refresh if needed" -ForegroundColor Yellow
         return $true
     } catch {
         Write-EngineError "Failed to apply folder icon" $_.Exception.Message

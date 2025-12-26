@@ -6,8 +6,8 @@
 ![Style](https://img.shields.io/badge/Style-Cyber%20%2F%20CLI-00ff00?style=for-the-badge)
 
 <p align="center">
-  <a href="https://github.com/Yous2ef/YMATools-FolderIconChanger/releases/download/v1.0.0/YMAIconChanger.ps1">
-    <img src="https://img.shields.io/badge/DOWNLOAD_TOOL_NOW-v1.0.0-00ff00?style=for-the-badge&logo=windows&logoColor=black&labelColor=101010" alt="Download YMA Tool" height="50">
+  <a href="https://github.com/Yous2ef/YMATools-FolderIconChanger/releases/download/v1.0.1/YMAIconChanger.ps1">
+    <img src="https://img.shields.io/badge/DOWNLOAD_TOOL_NOW-v1.0.1-00ff00?style=for-the-badge&logo=windows&logoColor=black&labelColor=101010" alt="Download YMA Tool" height="50">
   </a>
 </p>
 
